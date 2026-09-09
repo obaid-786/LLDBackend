@@ -1,4 +1,4 @@
-from base import Evaluator
+from .base import Evaluator
 
 REQUIRED_KEYWORDS = ["class", "responsibilit", "requirement"]
 
