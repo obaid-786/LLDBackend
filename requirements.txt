@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+mysql-connector-python
+pydantic
+python-dotenv
+groq
+pytest
+httpx
+mysql
