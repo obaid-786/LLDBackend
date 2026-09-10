@@ -1,7 +1,4 @@
-CREATE DATABASE IF NOT EXISTS lld_practice;
-USE lld_practice;
-
-CREATE TABLE problems (
+CREATE TABLE IF NOT EXISTS problems (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
@@ -9,7 +6,7 @@ CREATE TABLE problems (
   difficulty VARCHAR(20)
 );
 
-CREATE TABLE attempts (
+CREATE TABLE IF NOT EXISTS attempts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   problem_id INT NOT NULL,
   learner_id VARCHAR(100) NOT NULL,
@@ -19,7 +16,7 @@ CREATE TABLE attempts (
   FOREIGN KEY (problem_id) REFERENCES problems(id)
 );
 
-CREATE TABLE submissions (
+CREATE TABLE IF NOT EXISTS submissions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   attempt_id INT NOT NULL,
   format VARCHAR(20) DEFAULT 'text',
@@ -28,7 +25,7 @@ CREATE TABLE submissions (
   FOREIGN KEY (attempt_id) REFERENCES attempts(id)
 );
 
-CREATE TABLE evaluations (
+CREATE TABLE IF NOT EXISTS evaluations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   submission_id INT NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'Pending',
@@ -38,7 +35,7 @@ CREATE TABLE evaluations (
   FOREIGN KEY (submission_id) REFERENCES submissions(id)
 );
 
-CREATE TABLE rubric_scores (
+CREATE TABLE IF NOT EXISTS rubric_scores (
   id INT AUTO_INCREMENT PRIMARY KEY,
   evaluation_id INT NOT NULL,
   criterion VARCHAR(100) NOT NULL,
@@ -46,6 +43,5 @@ CREATE TABLE rubric_scores (
   evidence TEXT,
   concern TEXT,
   suggestion TEXT,
-  confidence FLOAT,
   FOREIGN KEY (evaluation_id) REFERENCES evaluations(id)
 );

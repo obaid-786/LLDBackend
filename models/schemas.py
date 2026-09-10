@@ -29,6 +29,8 @@ class EvaluationOut(BaseModel):
 class AttemptOut(BaseModel):
     id: int
     problem_id: int
+    problem_title: Optional[str] = None      
+    problem_description: Optional[str] = None  
     status: str
     started_at: datetime
     submitted_at: Optional[datetime] = None

@@ -41,6 +41,6 @@ class LLMEvaluator(Evaluator):
         for item in data.get("criteria", []):
             if item.get("criterion") not in valid_criteria:
                 raise ValueError(f"Unknown criterion: {item.get('criterion')}")
-            if not (0 <= int(item.get("score", -1)) <= 5):
-                raise ValueError("Score out of range (must be 0-5)")
+            if not (0 <= int(item.get("score", -1)) <= 10):
+                raise ValueError("Score out of range (must be 0-10)")
         return data

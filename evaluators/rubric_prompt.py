@@ -22,7 +22,7 @@ Respond with ONLY valid JSON, exactly matching this schema:
   "criteria": [
     {{
       "criterion":"string (one of the listed criteria)",
-      "score": integer (0-5),
+      "score": integer (0-10),
       "evidence":"short quote or paraphrase from submission",
       "concern":"one sentence or empty string",
       "suggestion": "one sentence or empty string",

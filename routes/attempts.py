@@ -35,19 +35,38 @@ def start_attempt(problem_id: int = Query(...), learner_id: str = Query(...)):
 def list_attempts(learner_id: str = Query(...)):
     conn = get_connection()
     cur = conn.cursor(dictionary=True)
-    cur.execute("SELECT * FROM attempts WHERE learner_id = %s ORDER BY started_at DESC",(learner_id,))
+    
+    # UPDATED QUERY: Join with problems table to get title and description
+    cur.execute(
+        """SELECT a.*, p.title as problem_title, p.description as problem_description 
+           FROM attempts a
+           JOIN problems p ON a.problem_id = p.id
+           WHERE a.learner_id = %s 
+           ORDER BY a.id DESC""",
+        (learner_id,)
+    )
     attempts = cur.fetchall()
-    result =[]
+    result = []
+    
     for att in attempts:
-        # Getimg latest submission and evaluation
-        cur.execute("SELECT * FROM submissions WHERE attempt_id = %s ORDER BY id DESC LIMIT 1",(att["id"],))
+        # Get latest submission and evaluation (keep existing logic)
+        cur.execute(
+            "SELECT * FROM submissions WHERE attempt_id = %s ORDER BY id DESC LIMIT 1",
+            (att["id"],)
+        )
         sub = cur.fetchone()
         ev_out = None
         if sub:
-            cur.execute("SELECT * FROM evaluations WHERE submission_id = %s ORDER BY id DESC LIMIT 1",(sub["id"],))
+            cur.execute(
+                "SELECT * FROM evaluations WHERE submission_id = %s ORDER BY id DESC LIMIT 1",
+                (sub["id"],)
+            )
             ev = cur.fetchone()
             if ev:
-                cur.execute("SELECT criterion, score, evidence, concern, suggestion FROM rubric_scores WHERE evaluation_id = %s",(ev["id"],))
+                cur.execute(
+                    "SELECT criterion, score, evidence, concern, suggestion FROM rubric_scores WHERE evaluation_id = %s",
+                    (ev["id"],)
+                )
                 scores = cur.fetchall()
                 ev_out = EvaluationOut(
                     id=ev["id"],
@@ -55,9 +74,13 @@ def list_attempts(learner_id: str = Query(...)):
                     overall_summary=ev["overall_summary"],
                     scores=[RubricScoreOut(**s) for s in scores]
                 )
+        
+        # Build the output with new problem_title and problem_description fields
         result.append(AttemptOut(
             id=att["id"],
             problem_id=att["problem_id"],
+            problem_title=att["problem_title"],
+            problem_description=att["problem_description"],
             status=att["status"],
             started_at=att["started_at"],
             submitted_at=att["submitted_at"],
