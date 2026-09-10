@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import logging
 from .base import Evaluator
@@ -20,6 +21,25 @@ def _client_singleton():
     return _client
 
 
+def _coerce_score(value) -> int:
+    """Coerce whatever the LLM returns into a 0-10 int."""
+    if value is None:
+        return 0
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int, float)):
+        return max(0, min(10, int(value)))
+    if isinstance(value, str):
+        m = re.search(r'\d+', value)
+        if m:
+            return max(0, min(10, int(m.group())))
+    return 0
+
+
+def _coerce_text(value) -> str:
+    return "" if value is None else str(value)
+
+
 class LLMEvaluator(Evaluator):
     def __init__(self):
         self.client = _client_singleton()
@@ -34,13 +54,12 @@ class LLMEvaluator(Evaluator):
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.2,
                 top_p=0.9,
-                max_tokens=self.max_tokens,     # hard cap on output
-                seed=42,                        # deterministic grading
+                max_tokens=self.max_tokens,
+                seed=42,
                 response_format={"type": "json_object"},
                 timeout=60,
             )
 
-            # Log usage so you can tune max_tokens over time
             usage = getattr(response, "usage", None)
             if usage is not None:
                 logger.info(
@@ -51,6 +70,7 @@ class LLMEvaluator(Evaluator):
                 )
 
             raw = response.choices[0].message.content
+            logger.info(f"Raw LLM response snippet: {raw[:300]}")
             return self._parse_and_validate(raw)
         except Exception as e:
             logger.error(f"LLM evaluation failed: {e}")
@@ -59,13 +79,32 @@ class LLMEvaluator(Evaluator):
     def _parse_and_validate(self, raw: str) -> dict:
         try:
             data = json.loads(raw)
-        except json.JSONDecodeError:
-            raise ValueError("LLM response is not valid JSON")
+        except json.JSONDecodeError as e:
+            raise ValueError(f"LLM response is not valid JSON: {e}")
 
         valid_criteria = set(RUBRIC_CRITERIA)
+        cleaned = []
+
         for item in data.get("criteria", []):
-            if item.get("criterion") not in valid_criteria:
-                raise ValueError(f"Unknown criterion: {item.get('criterion')}")
-            if not (0 <= int(item.get("score", -1)) <= 10):
-                raise ValueError("Score out of range (must be 0-10)")
-        return data
+            criterion = item.get("criterion")
+            if criterion not in valid_criteria:
+                logger.warning(f"Skipping unknown criterion: {criterion}")
+                continue
+
+            cleaned.append({
+                "criterion": criterion,
+                "score": _coerce_score(item.get("score")),
+                "evidence": _coerce_text(item.get("evidence")),
+                "concern": _coerce_text(item.get("concern")),
+                "suggestion": _coerce_text(item.get("suggestion")),
+            })
+
+        if not cleaned:
+            raise ValueError("LLM returned no valid criteria")
+
+        return {
+            "criteria": cleaned,
+            "overall_summary": _coerce_text(
+                data.get("overall_summary") or "Evaluation complete."
+            ),
+        }
