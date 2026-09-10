@@ -8,7 +8,7 @@ router = APIRouter()
 def list_problem():
     conn= get_connection()
     cur = conn.cursor(dictionary = True) 
-    cur.execute("SELECT id, title, descriptoin, constraints, difficulty FROM problems")
+    cur.execute("SELECT id, title, description, constraints, difficulty FROM problems")
     rows = cur.fetchall()
     cur.close()
     conn.close()

@@ -11,4 +11,4 @@ app.include_router(attempts.router)
 
 @app.get("/")
 def root():
-    return {"message":"Welcome to the LLD "}
+    return {"message": "LLD Practice Platform API"}

@@ -7,6 +7,8 @@ __pycache__/
 
 # Database scripts
 check_db.py
+test_llm.py
+list_models.py
 
 # C extensions
 *.so
